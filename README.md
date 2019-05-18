@@ -1,5 +1,5 @@
 # FlutterPullToRefreshView
-Flutter版的下拉刷新控件
+Flutter版的下拉刷新控件，且支持向上滑动至底部自动加载更多
 
 ## Screenshot
 
