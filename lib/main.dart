@@ -87,7 +87,10 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
             child: ListTile(title: Text(itemData, style: _bigFont))
           );
         },
-        key: _keyLoadMore);
+        key: _keyLoadMore,
+        // 自定义加载更多item的样式
+        //loadMoreItem: Center(child: Text('Loading...')),
+    );
   }
 
   Future<void> _onRefresh() {

@@ -10,18 +10,20 @@ const Duration _duration = Duration(milliseconds: 300);
 
 class LoadMoreListView<T> extends StatefulWidget {
 
-  LoadMoreListView(List<T> list, Builder builder, {Key key}) :
+  LoadMoreListView(List<T> list, Builder builder, {Key key, Widget loadMoreItem}) :
         _list = list,
-         _builder = builder,
+        _builder = builder,
+        _loadMoreItem = loadMoreItem,
         super(key: key);
 
 
   final List<T> _list;
   final Builder _builder;
+  final Widget _loadMoreItem;
 
   @override
   State<StatefulWidget> createState() {
-    return LoadMoreListViewState(_list, _builder);
+    return LoadMoreListViewState(_list, _builder, loadMoreItem: _loadMoreItem);
   }
 
 }
@@ -29,9 +31,10 @@ class LoadMoreListView<T> extends StatefulWidget {
 
 class LoadMoreListViewState<T> extends State<LoadMoreListView> {
 
-  LoadMoreListViewState(List<T> list, Builder builder) :
+  LoadMoreListViewState(List<T> list, Builder builder, {Widget loadMoreItem}) :
         _list = list,
-        _builder = builder;
+        _builder = builder,
+        _loadMoreItem = loadMoreItem;
 
 
   static const String loadMore = '正在加载...';
@@ -40,6 +43,7 @@ class LoadMoreListViewState<T> extends State<LoadMoreListView> {
   final GlobalKey<AnimatedListState> _keyAnimatedList = new GlobalKey();
   final List<T> _list;
   final Builder _builder;
+  final Widget _loadMoreItem;
   bool _canLoadMore = true;
 
 
@@ -48,22 +52,14 @@ class LoadMoreListViewState<T> extends State<LoadMoreListView> {
     return AnimatedList(key: _keyAnimatedList,
       itemBuilder: (context, index, animation) {
         bool bottomEdge = index == _list.length;
-        TextStyle style;
         T element;
         Widget childView;
         if (bottomEdge) {
-          style = TextStyle(color: Colors.black, fontSize: 15.0);
-          String loadText = _canLoadMore ? loadMore : noMore;
           childView = new Card(
             color: Colors.transparent,
             elevation: 0.0,
             borderOnForeground: false,
-            child: new SizedBox(
-              height: 44.0,
-              child: new Center(
-                child: new Text(loadText, style: style),
-              ),
-            ),
+            child: _buildLoadMoreItem(),
           );
         } else {
           element = _list[index];
@@ -77,6 +73,33 @@ class LoadMoreListViewState<T> extends State<LoadMoreListView> {
       },
       initialItemCount: _list.isEmpty ? 0 : (_list.length + 1),
     );
+  }
+
+  Widget _buildLoadMoreItem() {
+    double cpiSize = _canLoadMore ? 13.0 : 0.0;
+    TextStyle style = TextStyle(color: Colors.black, fontSize: 15.0);
+    String loadText = _canLoadMore ? loadMore : noMore;
+    Widget item = _loadMoreItem;
+    if (item == null) {
+      item = SizedBox(
+        height: 44.0,
+        child: Row(mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Padding(
+                padding: EdgeInsetsDirectional.only(end: 6),
+                child: SizedBox(
+                  width: cpiSize, height: cpiSize,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.0,
+                  ),
+                )
+            ),
+            Text(loadText, style: style),
+          ],
+        ),
+      );
+    }
+    return item;
   }
 
   void setCanLoadMore(bool canLoadMore) {
