@@ -1,11 +1,11 @@
 # FlutterPullToRefreshView
 
-Flutter版的下拉刷新控件，且支持向上滑动至底部自动加载更多
+Flutter版的下拉刷新控件，且支持上滑至底部自动加载更多
 
 
 ## Screenshot
 
-![](screen/screenshot.webp)
+![](screen/screenshot.gif)
 
 
 ## Core code
