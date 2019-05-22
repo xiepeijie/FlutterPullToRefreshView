@@ -48,7 +48,9 @@ class PullToRefreshState extends State<PullToRefreshView>
   bool _onLoading = false;
   bool _canLoadMore = true;
 
-  bool _isIOSTop = false;
+  static final _isIOS = Platform.isIOS;
+  final millisecond = _isIOS ? 4 : 2;
+  bool _isIOSScrollTop = false;
 
   @override
   void initState() {
@@ -105,8 +107,8 @@ class PullToRefreshState extends State<PullToRefreshView>
     if (notification is ScrollStartNotification) {
       //print('start');
       _dragOffset = 0.0;
-      if (Platform.isIOS) {
-        _isIOSTop = notification.metrics.pixels == 0;
+      if (_isIOS) {
+        _isIOSScrollTop = notification.metrics.pixels == 0;
       }
     }
 
@@ -127,7 +129,7 @@ class PullToRefreshState extends State<PullToRefreshView>
           _loadMore();
         }
         return false;
-      } else if (_isIOSTop) {
+      } else if (_isIOSScrollTop) {
         _checkDragOffset(notification);
       }
     }
@@ -145,7 +147,8 @@ class PullToRefreshState extends State<PullToRefreshView>
     if (notification is ScrollEndNotification) {
       //print('end');
       if (_top > 30) {
-        Timer.periodic(Duration(milliseconds: 1), (timer) {
+        Timer.periodic(Duration(milliseconds: millisecond), (timer) {
+            //print('定时器Timer在Android和iOS平台上，回调函数执行的频率不同，导致下拉刷新回弹效果有差异');
             if (_top > 30) {
               setState(() {
                 _top -= 1.3;
@@ -179,14 +182,14 @@ class PullToRefreshState extends State<PullToRefreshView>
     double dy;
     if (notification is ScrollUpdateNotification) {
       setState(() {
-        dy = notification.scrollDelta;
-        dy = dy.clamp(-3.0, -1.3);
+        dy = notification.scrollDelta * 1.6;
+        dy = dy.clamp(-5.0, 0.0);
         //print("update dy = $dy");
         _top -= dy;
         _top = math.min(_top, 100);
       });
 
-      _dragOffset -= notification.scrollDelta;
+      _dragOffset -= math.min(notification.scrollDelta, 0.0);
     } else if (notification is OverscrollNotification) {
       setState(() {
         dy = notification.overscroll / 2.0;
@@ -206,14 +209,13 @@ class PullToRefreshState extends State<PullToRefreshView>
     if (_onRefreshing) {
       return;
     }
-    if (Platform.isIOS) {
-      _positionController.duration = Duration(milliseconds: 800);
+    if (_isIOS) {
+      _positionController.duration = Duration(milliseconds: 600);
       _positionController.repeat();
     } else {
-      setState(() {
-        _onRefreshing = true;
-      });
+      setState(() {});
     }
+    _onRefreshing = true;
 
     Future<void> refreshResult = widget.onRefresh();
     refreshResult.whenComplete(() {
@@ -235,7 +237,7 @@ class PullToRefreshState extends State<PullToRefreshView>
   void _reset() {
     _positionController.stop();
     if (_top > _initTop) {
-      Timer.periodic(Duration(milliseconds: 1), (timer) {
+      Timer.periodic(Duration(milliseconds: millisecond), (timer) {
           if (_top > _initTop) {
             setState(() {
               _top -= 1.3;
@@ -284,7 +286,7 @@ class PullToRefreshState extends State<PullToRefreshView>
               animation: _positionController,
               builder: (BuildContext context, Widget child) {
                 return RefreshProgressIndicator(
-                  value: _onRefreshing ? null : _value.value,
+                  value: _isIOS ? _value.value : (_onRefreshing ? null : _value.value),
                   valueColor: _valueColor,
                   backgroundColor: Colors.white70,
                 );
