@@ -40,7 +40,10 @@ Flutter版的下拉刷新控件，且支持上滑至底部自动加载更多
             child: ListTile(title: Text(itemData, style: _bigFont))
           );
         },
-        key: _keyLoadMore);
+        key: _keyLoadMore,
+        // 自定义加载更多item的样式
+        //loadMoreItem: Center(child: Text('Loading...')),
+    );
   }
 ```
 
@@ -49,7 +52,7 @@ Flutter版的下拉刷新控件，且支持上滑至底部自动加载更多
 
 ## Exist Problem
 
-1、下拉刷新交互效果在iOS上体验较差，在Android上体验还不错，后续想办法优化在iOS上的体验  
+1、加载更多Item已支持使用自定义Widget，下拉刷新动效暂不支持修改，也不支持使用自定义的动效  
 
 
 ## About me
