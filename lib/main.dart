@@ -64,7 +64,7 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
   @override
   void initState() {
     super.initState();
-    _onRefresh();
+    //_onRefresh();
   }
 
   @override
@@ -79,7 +79,8 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
   }
 
   Widget _buildWidget() {
-    return LoadMoreListView<String>(_list,
+    return LoadMoreListView<String>(
+        _list,
         (index, itemData) {
           //print("item = $index");
           return new Card(
@@ -90,6 +91,7 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
         key: _keyLoadMore,
         // 自定义加载更多item的样式
         //loadMoreItem: Center(child: Text('Loading...')),
+        emptyText: '暂时还没数据，试试下拉刷新',
     );
   }
 
@@ -124,9 +126,7 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
       for (int j = 0; j < _list.length; ++j) {
         _keyLoadMore.currentState.removeItem(0, removeBuilder);
       }
-      if (!isEmpty) {
-        _keyLoadMore.currentState.removeItem(0, removeBuilder);
-      }
+      _keyLoadMore.currentState.removeItem(0, removeBuilder);
       _list.clear();
     }
     isEmpty = _list.isEmpty;

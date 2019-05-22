@@ -99,7 +99,6 @@ class PullToRefreshState extends State<PullToRefreshView>
       _left = context.size.width / 2 - 20;
       _contentWidth = context.size.width;
       _contentHeight = context.size.height;
-      //print("layout size = ${context.size}");
     });
   }
 
@@ -125,7 +124,8 @@ class PullToRefreshState extends State<PullToRefreshView>
           _dragOffset -= notification.scrollDelta;
           double newValue = _dragOffset / (notification.metrics.viewportDimension * 0.25);
           _positionController.value = newValue.clamp(0.0, 1.0);
-        } else if (notification.metrics.atEdge) {
+        } else if (notification.metrics.atEdge
+            && notification.metrics.maxScrollExtent > 0.0) {
           _loadMore();
         }
         return false;
@@ -135,8 +135,9 @@ class PullToRefreshState extends State<PullToRefreshView>
     }
 
     if (notification is OverscrollNotification) {
-      if (notification.metrics.pixels > 0.0) {
-        if (notification.overscroll > 0.5) {
+      if (notification.overscroll > 0.0) {
+        if (notification.overscroll > 0.5
+            && notification.metrics.maxScrollExtent > 0.0) {
           _loadMore();
         }
       } else {
@@ -280,7 +281,7 @@ class PullToRefreshState extends State<PullToRefreshView>
           left: _left,
           child: Container(
             key: _keyIndicator,
-            padding: EdgeInsets.only(bottom: 20),
+            padding: EdgeInsets.only(bottom: 20.0),
             alignment: Alignment.topCenter,
             child: AnimatedBuilder(
               animation: _positionController,
