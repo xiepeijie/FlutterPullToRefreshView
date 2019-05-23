@@ -11,7 +11,7 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    print('MyApp build');
+    print('MyApp.build');
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
@@ -25,10 +25,7 @@ class MyApp extends StatelessWidget {
           // Notice that the counter didn't reset back to zero; the application
           // is not restarted.
           primarySwatch: Colors.blue),
-      home: Scaffold(
-        appBar: AppBar(title: Text('PullToRefresh'), centerTitle: true,),
-        body: _PullToRefreshDemo(),
-      ),
+      home: _PullToRefreshDemo(),
     );
   }
 }
@@ -64,17 +61,24 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
   @override
   void initState() {
     super.initState();
-    //_onRefresh();
+    _onRefresh();
   }
 
   @override
   Widget build(BuildContext context) {
     print('_PullToRefreshDemoState.build');
-    return PullToRefreshView(
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('PullToRefresh'),
+        centerTitle: true,
+        actions: <Widget>[IconButton(icon: Icon(Icons.delete), onPressed: _clearList)],
+      ),
+      body: PullToRefreshView(
         key: _keyPullToRefresh,
         child: _buildWidget(),
         onRefresh: _onRefresh,
         onLoadMore: _onLoadMore,
+      ),
     );
   }
 
@@ -93,6 +97,16 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
         //loadMoreItem: Center(child: Text('Loading...')),
         emptyText: '暂时还没数据，试试下拉刷新',
     );
+  }
+
+  void _clearList() {
+    final removeBuilder = (c, a) {};
+    for (int j = 0; j < _list.length; ++j) {
+      _keyLoadMore.currentState.removeItem(0, removeBuilder);
+    }
+    _keyLoadMore.currentState.removeItem(0, removeBuilder);
+    _list.clear();
+    _keyLoadMore.currentState.insertItem(0);
   }
 
   Future<void> _onRefresh() {
@@ -118,7 +132,7 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
     dynamic result = await _http.get();
     if (result == null) return;
     Duration duration = Duration(milliseconds: 400);
-    bool isEmpty = _list.isEmpty;
+    bool isEmpty;
     if (refresh) {
       final removeBuilder = (c, a) {};
       for (int j = 0; j < _list.length; ++j) {
