@@ -8,11 +8,24 @@ Flutter版的下拉刷新控件，且支持上滑至底部自动加载更多
 ![](screen/screenshot.gif)
 
 
-## Core code
+## Add package dependency
 
-控件核心代码2个dart文件：  
-1、widget/pull_to_refresh.dart  
-2、widget/load_more_list_view.dart  
+在pubspec.yaml文件中添加依赖
+
+```flutter_pull_to_refresh: ^1.0.0```  
+
+然后执行获取依赖包的命令
+
+```flutter packages get```
+
+
+## Import
+
+在需要使用时，导入依赖
+
+```
+import 'package:flutter_pull_to_refresh/pull_to_refresh.dart'
+```
 
 
 ## Usage
@@ -52,7 +65,7 @@ Flutter版的下拉刷新控件，且支持上滑至底部自动加载更多
 
 ## Exist Problem
 
-1、加载更多Item已支持使用自定义Widget，下拉刷新动效暂不支持修改，也不支持使用自定义的动效  
+1、下拉刷新动效暂不支持修改，也不支持使用自定义的动效  
 
 
 ## About me

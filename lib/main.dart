@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'http.dart';
-import 'package:pull_to_refresh_view/widget/pull_to_refresh.dart';
-import 'package:pull_to_refresh_view/widget/load_more_list_view.dart';
+import 'package:pull_to_refresh_view/widget/flutter_pull_to_refresh.dart';
+
 
 void main() => runApp(MyApp());
 
@@ -112,7 +112,6 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
   Future<void> _onRefresh() {
     i = 1;
     _keyPullToRefresh.currentState?.setCanLoadMore(true);
-    _keyLoadMore.currentState?.setCanLoadMore(true);
     final Completer<void> completer = Completer<void>();
     Timer(const Duration(seconds: 1), () { completer.complete(); });
     return completer.future.then((v) {
@@ -153,7 +152,6 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
     }
     if (i > 40) {
       _keyPullToRefresh.currentState.setCanLoadMore(false);
-      _keyLoadMore.currentState.setCanLoadMore(false);
     }
   }
 

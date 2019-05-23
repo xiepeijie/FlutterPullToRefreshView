@@ -1,13 +1,22 @@
+library flutter_pull_to_refresh;
+
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+
+/// pull to refresh view begin
+
+
 typedef LoadMoreCallback = Future<void> Function({dynamic extra});
 
+
+bool _canLoadMore = true;
+
+
 class PullToRefreshView extends StatefulWidget {
-  //final GlobalKey<PullToRefreshState> key;
 
   final Widget child;
 
@@ -15,9 +24,12 @@ class PullToRefreshView extends StatefulWidget {
 
   final LoadMoreCallback onLoadMore;
 
-  const PullToRefreshView(
-      {Key key, @required this.child, this.onRefresh, this.onLoadMore})
-      : super(key: key);
+  const PullToRefreshView({
+        Key key,
+        @required this.child,
+        this.onRefresh,
+        this.onLoadMore
+      }) : super(key: key);
 
   @override
   State<StatefulWidget> createState() {
@@ -30,8 +42,8 @@ class PullToRefreshState extends State<PullToRefreshView>
   final GlobalKey _keyIndicator = GlobalKey();
 
   static double _initTop = -80.0;
-  double _top = _initTop; //距顶部的偏移
-  double _left = 0.0; //距左边的偏移
+  double _top = _initTop;
+  double _left = 0.0;
 
   double _dragOffset = 0.0;
 
@@ -46,11 +58,11 @@ class PullToRefreshState extends State<PullToRefreshView>
 
   bool _onRefreshing = false;
   bool _onLoading = false;
-  bool _canLoadMore = true;
 
   static final _isIOS = Platform.isIOS;
   final millisecond = _isIOS ? 4 : 2;
   bool _isIOSScrollTop = false;
+
 
   @override
   void initState() {
@@ -58,7 +70,6 @@ class PullToRefreshState extends State<PullToRefreshView>
     WidgetsBinding.instance.addPostFrameCallback(_frameCallback);
 
     _positionController = AnimationController(vsync: this);
-    //_positionFactor = _positionController.drive(_kDragSizeFactorLimitTween);
     // The "value" of the circular progress indicator during a drag.
     _value = _positionController.drive(_threeQuarterTween);
   }
@@ -67,9 +78,9 @@ class PullToRefreshState extends State<PullToRefreshView>
   void didChangeDependencies() {
     final ThemeData theme = Theme.of(context);
     _valueColor = _positionController.drive(ColorTween(
-              begin: (theme.accentColor).withOpacity(0.0),
-              end: (theme.accentColor).withOpacity(1.0))
-          .chain(CurveTween(curve: const Interval(0.0, 1.0 / 1.5))),
+        begin: (theme.accentColor).withOpacity(0.0),
+        end: (theme.accentColor).withOpacity(1.0))
+        .chain(CurveTween(curve: const Interval(0.0, 1.0 / 1.5))),
     );
     super.didChangeDependencies();
   }
@@ -149,15 +160,15 @@ class PullToRefreshState extends State<PullToRefreshView>
       //print('end');
       if (_top > 30) {
         Timer.periodic(Duration(milliseconds: millisecond), (timer) {
-            //print('定时器Timer在Android和iOS平台上，回调函数执行的频率不同，导致下拉刷新回弹效果有差异');
-            if (_top > 30) {
-              setState(() {
-                _top -= 1.3;
-              });
-            } else {
-              timer.cancel();
-              _refresh();
-            }
+          //print('定时器Timer在Android和iOS平台上，回调函数执行的频率不同，导致下拉刷新回弹效果有差异');
+          if (_top > 30) {
+            setState(() {
+              _top -= 1.3;
+            });
+          } else {
+            timer.cancel();
+            _refresh();
+          }
         });
       } else {
         _reset();
@@ -229,7 +240,7 @@ class PullToRefreshState extends State<PullToRefreshView>
     if (_canLoadMore && !_onLoading && widget.onLoadMore != null) {
       _onLoading = true;
       widget.onLoadMore().whenComplete(() {
-        print('load more complete');
+        //print('load more complete');
         _onLoading = false;
       });
     }
@@ -239,16 +250,16 @@ class PullToRefreshState extends State<PullToRefreshView>
     _positionController.stop();
     if (_top > _initTop) {
       Timer.periodic(Duration(milliseconds: millisecond), (timer) {
-          if (_top > _initTop) {
-            setState(() {
-              _top -= 1.3;
-            });
-          } else {
-            timer.cancel();
-            _top = _initTop;
-            _dragOffset = 0.0;
-            //_positionController.value = 0.0;
-          }
+        if (_top > _initTop) {
+          setState(() {
+            _top -= 1.3;
+          });
+        } else {
+          timer.cancel();
+          _top = _initTop;
+          _dragOffset = 0.0;
+          //_positionController.value = 0.0;
+        }
       });
     } else {
       _top = _initTop;
@@ -299,3 +310,151 @@ class PullToRefreshState extends State<PullToRefreshView>
     );
   }
 }
+
+
+/// load more list view begin
+
+
+typedef Builder = Widget Function(int index, dynamic itemData);
+
+
+// The default insert/remove animation duration.
+const Duration _duration = Duration(milliseconds: 300);
+
+
+
+class LoadMoreListView<T> extends StatefulWidget {
+
+  LoadMoreListView(this.list, this.builder,
+      {Key key, this.loadMoreItem, this.emptyImageAsset, String emptyText = '暂无内容'}) :
+        emptyText = emptyText,
+        super(key: key);
+
+  final List<T> list;
+  final Builder builder;
+  final Widget loadMoreItem;
+  final String emptyImageAsset;
+  final String emptyText;
+
+
+  @override
+  State<StatefulWidget> createState() {
+    return LoadMoreListViewState();
+  }
+
+}
+
+
+class LoadMoreListViewState<T> extends State<LoadMoreListView> {
+
+  static const String loadMore = '正在加载...';
+  static const String noMore = '我是有底线的';
+
+  final GlobalKey<AnimatedListState> _keyAnimatedList = new GlobalKey();
+
+  double _emptyHeight = 0.0;
+  String _emptyImageAsset;
+  String _emptyText;
+
+  set emptyImageAsset(String emptyImage) {
+    _emptyImageAsset = emptyImage;
+  }
+
+  set emptyText(String emptyText) {
+    _emptyText = emptyText;
+  }
+
+  @override
+  void initState() {
+    _emptyImageAsset = widget.emptyImageAsset;
+    _emptyText = widget.emptyText;
+    WidgetsBinding.instance.addPostFrameCallback((d) {
+      setState(() {
+        double height = _keyAnimatedList.currentContext.size.height;
+        _emptyHeight = height.clamp(200.0, 500.0);
+      });
+    });
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _canLoadMore = widget.list.isNotEmpty;
+    return AnimatedList(key: _keyAnimatedList,
+      itemBuilder: (context, index, animation) {
+        if (widget.list.isEmpty) {
+          return _buildEmptyView();
+        }
+        bool bottomEdge = index == widget.list.length;
+        T element;
+        Widget childView;
+        if (bottomEdge) {
+          childView = Card(
+            color: Colors.transparent,
+            elevation: 0.0,
+            borderOnForeground: false,
+            child: _buildLoadMoreItem(),
+          );
+        } else {
+          element = widget.list[index];
+          childView = widget.builder(index, element);
+        }
+        return new SizeTransition(
+          axis: Axis.vertical,
+          sizeFactor: animation,
+          child: childView,
+        );
+      },
+      initialItemCount: widget.list.isEmpty ? 1 : (widget.list.length + 1),
+    );
+  }
+
+  Widget _buildEmptyView() {
+    List<Widget> children = <Widget>[Padding(padding: EdgeInsets.only(top: 10.0),
+        child: Text(_emptyText, style: TextStyle(color: Colors.grey, fontSize: 16.0)))];
+    if (_emptyImageAsset != null) {
+      children.insert(0, Image.asset(_emptyImageAsset));
+    }
+    Column emptyView = Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: children,
+    );
+    return SizedBox(width: double.infinity, height: _emptyHeight, child: emptyView);
+  }
+
+  Widget _buildLoadMoreItem() {
+    double cpiSize = _canLoadMore ? 13.0 : 0.0;
+    TextStyle style = TextStyle(fontSize: 15.0);
+    String loadText = _canLoadMore ? loadMore : noMore;
+    Widget item = widget.loadMoreItem;
+    if (item == null) {
+      item = SizedBox(
+        height: 44.0,
+        child: Row(mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Padding(
+                padding: EdgeInsetsDirectional.only(end: 6.0),
+                child: SizedBox(
+                  width: cpiSize, height: cpiSize,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 1.5,
+                  ),
+                )
+            ),
+            Text(loadText, style: style),
+          ],
+        ),
+      );
+    }
+    return item;
+  }
+
+  void insertItem(int index, {Duration duration = _duration}) {
+    _keyAnimatedList.currentState.insertItem(index, duration: duration);
+  }
+
+  void removeItem(int index, AnimatedListRemovedItemBuilder builder, {Duration duration = _duration}) {
+    _keyAnimatedList.currentState.removeItem(index, builder, duration: duration);
+  }
+}
+
