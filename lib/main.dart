@@ -97,10 +97,8 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
 
   Future<void> _onRefresh() {
     i = 1;
-    if (_keyPullToRefresh.currentState != null) {
-      _keyPullToRefresh.currentState.setCanLoadMore(true);
-      _keyLoadMore.currentState.setCanLoadMore(true);
-    }
+    _keyPullToRefresh.currentState?.setCanLoadMore(true);
+    _keyLoadMore.currentState?.setCanLoadMore(true);
     final Completer<void> completer = Completer<void>();
     Timer(const Duration(seconds: 1), () { completer.complete(); });
     return completer.future.then((v) {

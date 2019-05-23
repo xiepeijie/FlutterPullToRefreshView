@@ -265,8 +265,8 @@ class PullToRefreshState extends State<PullToRefreshView>
             child: Positioned(
               top: _top - _initTop,
               left: 0,
-              width: _contentWidth == null ? 600 : _contentWidth,
-              height: _contentHeight == null ? 800 : _contentHeight,
+              width: _contentWidth ?? 600,
+              height: _contentHeight ?? 800,
               child: widget.child,
             )));
 
