@@ -379,7 +379,6 @@ class LoadMoreListViewState<T> extends State<LoadMoreListView> {
 
   @override
   Widget build(BuildContext context) {
-    _canLoadMore = widget.list.isNotEmpty;
     return AnimatedList(key: _keyAnimatedList,
       itemBuilder: (context, index, animation) {
         if (widget.list.isEmpty) {
