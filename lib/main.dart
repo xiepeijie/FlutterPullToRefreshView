@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'http.dart';
-import 'package:pull_to_refresh_view/widget/flutter_pull_to_refresh.dart';
+import 'package:flutter_pull_to_refresh/flutter_pull_to_refresh.dart';
 
 
 void main() => runApp(MyApp());
