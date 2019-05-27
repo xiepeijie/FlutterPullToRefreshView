@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'data.dart';
 import 'http.dart';
 import 'package:flutter_pull_to_refresh/flutter_pull_to_refresh.dart';
 
@@ -128,7 +129,7 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
   }
 
   Future<void> _loadDataFromHttp(bool refresh) async {
-    dynamic result = await _http.get();
+    List<Data> result = await _http.get();
     if (result == null) return;
     Duration duration = Duration(milliseconds: 400);
     bool isEmpty;
@@ -141,9 +142,9 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
       _list.clear();
     }
     isEmpty = _list.isEmpty;
-    List<dynamic> dataArray = result;
-    dataArray.forEach((item) {
-      _list.add("($i)${item['name']}");
+
+    result.forEach((item) {
+      _list.add("($i)${item.name}");
       _keyLoadMore.currentState.insertItem(_list.length - 1, duration: duration);
       ++i;
     });
