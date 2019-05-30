@@ -57,7 +57,7 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
 
   int i = 1;
 
-  static const List<Color> colors = [Colors.white70, Colors.white54];
+  static const List<Color> colors = [Color(0xFFf9f9f9), Color(0xFFEEEEEE)];
 
   @override
   void initState() {
@@ -72,7 +72,14 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
       appBar: AppBar(
         title: Text('PullToRefresh'),
         centerTitle: true,
-        actions: <Widget>[IconButton(icon: Icon(Icons.delete), onPressed: _clearList)],
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.delete),
+            onPressed: () {
+              _clearList(true);
+            }
+          )
+        ],
       ),
       body: PullToRefreshView(
         key: _keyPullToRefresh,
@@ -88,9 +95,26 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
         _list,
         (index, itemData) {
           //print("item = $index");
-          return new Card(
+          Column column = Column(children: <Widget>[]);
+          Widget itemChild = Container(
+              height: 64.0,
+              child: ListTile(title: Text(itemData, style: _bigFont))
+          );
+          column.children.add(itemChild);
+          //column.children.add(Divider(color: Color(0xFF999999), height: 2.0));
+          return Material(
             color: colors[index % colors.length],
-            child: ListTile(title: Text(itemData, style: _bigFont))
+            child: InkWell(
+              onTap: () {
+                _list.removeAt(index);
+                _keyLoadMore.currentState.removeItem(
+                  index,
+                  _removedItemBuilder(itemChild),
+                  duration: Duration(milliseconds: 500)
+                );
+              },
+              child: column
+            )
           );
         },
         key: _keyLoadMore,
@@ -100,14 +124,16 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
     );
   }
 
-  void _clearList() {
+  void _clearList(bool showEmptyView) {
     final removeBuilder = (c, a) {};
     for (int j = 0; j < _list.length; ++j) {
       _keyLoadMore.currentState.removeItem(0, removeBuilder);
     }
     _keyLoadMore.currentState.removeItem(0, removeBuilder);
     _list.clear();
-    _keyLoadMore.currentState.insertItem(0);
+    if (showEmptyView) {
+      _keyLoadMore.currentState.insertItem(0);
+    }
   }
 
   Future<void> _onRefresh() {
@@ -133,12 +159,7 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
     if (result == null) return;
     bool isEmpty;
     if (refresh) {
-      final removeBuilder = (c, a) {};
-      for (int j = 0; j < _list.length; ++j) {
-        _keyLoadMore.currentState.removeItem(0, removeBuilder);
-      }
-      _keyLoadMore.currentState.removeItem(0, removeBuilder);
-      _list.clear();
+      _clearList(false);
     }
     isEmpty = _list.isEmpty;
 
@@ -155,4 +176,15 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
     }
   }
 
+  AnimatedListRemovedItemBuilder _removedItemBuilder(Widget child) {
+    AnimatedListRemovedItemBuilder removedItemBuilder = (context, animation) {
+      return SlideTransition(
+          position: Tween<Offset>(
+              begin: Offset(1.2, 0.0), end: Offset(0.0, 0.0)).animate(
+              animation),
+          child: child
+      );
+    };
+    return removedItemBuilder;
+  }
 }
