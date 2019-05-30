@@ -319,7 +319,7 @@ typedef Builder = Widget Function(int index, dynamic itemData);
 
 
 // The default insert/remove animation duration.
-const Duration _duration = Duration(milliseconds: 300);
+const Duration _duration = Duration(milliseconds: 200);
 
 
 
@@ -398,9 +398,9 @@ class LoadMoreListViewState<T> extends State<LoadMoreListView> {
           element = widget.list[index];
           childView = widget.builder(index, element);
         }
-        return new SizeTransition(
-          axis: Axis.vertical,
-          sizeFactor: animation,
+        return new SlideTransition(
+          //axis: Axis.vertical,
+          position: Tween<Offset>(begin: Offset(0.0, 1.0), end: Offset.zero).animate(animation),
           child: childView,
         );
       },
