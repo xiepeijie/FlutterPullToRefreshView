@@ -12,11 +12,15 @@ Flutter版的下拉刷新控件，且支持上滑至底部自动加载更多
 
 在pubspec.yaml文件中添加依赖
 
-```flutter_pull_to_refresh: ^1.0.0```  
+```
+flutter_pull_to_refresh: ^1.0.1
+```  
 
 然后执行获取依赖包的命令
 
-```flutter packages get```
+```
+flutter packages get
+```
 
 
 ## Import
