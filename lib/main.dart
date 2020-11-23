@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:pull_to_refresh_view/dio_http.dart';
+import 'package:pull_to_refresh_view/model.dart';
 import 'data.dart';
 import 'http.dart';
 import 'widget/flutter_pull_to_refresh.dart';
@@ -51,7 +53,7 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
 
   final _bigFont = const TextStyle(fontSize: 18.0);
 
-  final List<String> _list = List();
+  final List<Model> _list = List();
 
   final Http _http = Http();
 
@@ -91,14 +93,15 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
   }
 
   Widget _buildWidget() {
-    return LoadMoreListView<String>(
+    return LoadMoreListView<Model>(
         _list,
         (index, itemData) {
           //print("item = $index");
+          Model itemModel = itemData as Model;
           Column column = Column(children: <Widget>[]);
           Widget itemChild = Container(
               height: 64.0,
-              child: ListTile(title: Text(itemData, style: _bigFont))
+              child: ListTile(title: Text('$index.${itemModel.name}', style: _bigFont))
           );
           column.children.add(itemChild);
           //column.children.add(Divider(color: Color(0xFF999999), height: 2.0));
@@ -142,7 +145,8 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
     final Completer<void> completer = Completer<void>();
     Timer(const Duration(seconds: 1), () { completer.complete(); });
     return completer.future.then((v) {
-      _loadDataFromHttp(true);
+      // _loadDataFromHttp(true);
+      _requestData(true);
     });
   }
 
@@ -150,8 +154,39 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
     final Completer<void> completer = Completer<void>();
     Timer(const Duration(seconds: 1), () { completer.complete(); });
     return completer.future.then((v) {
-      _loadDataFromHttp(false);
+      // _loadDataFromHttp(false);
+      _requestData(false);
     });
+  }
+
+  void _requestData(bool refresh) {
+    DioHttp.request<List<dynamic>>('/wxarticle/chapters/json',
+        method: DioHttp.GET,
+        onSuccess: (data) {
+          print("data <- " + data.toString());
+          List<Model> result = data.map((e) => Model.fromJson(e)).toList();
+          if (result == null) return;
+          bool isEmpty;
+          if (refresh) {
+            _clearList(false);
+          }
+          isEmpty = _list.isEmpty;
+
+          result.forEach((item) {
+            _list.add(item);
+            _keyLoadMore.currentState.insertItem(_list.length - 1);
+            ++i;
+          });
+          if (isEmpty) {
+            _keyLoadMore.currentState.insertItem(_list.length);
+          }
+          if (i > 40) {
+            _keyPullToRefresh.currentState.setCanLoadMore(false);
+          }
+        },
+        onError: (error, errorMsg) {
+          print('$error, $errorMsg');
+        });
   }
 
   Future<void> _loadDataFromHttp(bool refresh) async {
@@ -164,7 +199,7 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
     isEmpty = _list.isEmpty;
 
     result.forEach((item) {
-      _list.add("($i)${item.name}");
+      _list.add(Model(id: item.id, name: item.name));
       _keyLoadMore.currentState.insertItem(_list.length - 1);
       ++i;
     });
