@@ -1,18 +1,15 @@
 
-import 'package:json_annotation/json_annotation.dart';
+import 'base_model.dart';
 
-part 'data.g.dart';
-
-
-
-@JsonSerializable()
-class Data {
+class Data extends BaseModel {
   int id;
   String name;
 
-  Data(this.id, this.name);
+  Data.fromJson(dynamic map) : super.fromJson(map) {
+    id = map['id'];
+    name = map['name'];
+  }
 
-  factory Data.fromJson(Map<String, dynamic> json) => _$DataFromJson(json);
-
-  Map<String, dynamic> toJson() => _$DataToJson(this);
+  @override
+  Map<String, dynamic> toJson() => {'id': id, 'name': name};
 }
