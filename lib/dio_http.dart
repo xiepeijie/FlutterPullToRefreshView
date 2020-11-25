@@ -22,14 +22,13 @@ class DioHttp {
             return true;
           },
           headers: {
-            'Accept': 'application/json,*/*',
             'Content-Type': 'application/json'
           });
       _dio = Dio(options);
-      _dio.interceptors.add(InterceptorsWrapper(
+      /*_dio.interceptors.add(InterceptorsWrapper(
           onRequest: (RequestOptions options) {},
           onResponse: (data) {},
-          onError: (error) {}));
+          onError: (error) {}));*/
     }
     return _dio;
   }
@@ -48,9 +47,9 @@ class DioHttp {
       } else {
         response = await dio.post(apiPath, cancelToken: cancelToken);
       }
-      var resData = response.data;
-      var code = resData['errorCode'];
-      var msg = resData['errorMsg'];
+      final resData = response.data;
+      final code = resData['errorCode'];
+      final msg = resData['errorMsg'];
       print('response code <- $code');
       if (code == 0 || code == 200) {
         var data = resData['data'];
