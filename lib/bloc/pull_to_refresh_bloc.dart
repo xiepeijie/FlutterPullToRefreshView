@@ -2,7 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pull_to_refresh_view/dio_http.dart';
 import 'package:pull_to_refresh_view/model.dart';
 
-import 'ModelState.dart';
+import 'model_state.dart';
 
 class PullToRefreshBloc extends Bloc<String, ModelState> {
 

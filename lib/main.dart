@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pull_to_refresh_view/bloc/pull_to_refresh_bloc.dart';
 import 'package:pull_to_refresh_view/dio_http.dart';
 import 'package:pull_to_refresh_view/model.dart';
-import 'bloc/ModelState.dart';
+import 'bloc/model_state.dart';
 import 'data.dart';
 import 'http.dart';
 import 'widget/flutter_pull_to_refresh.dart';
@@ -55,7 +55,7 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
 
   final GlobalKey<PullToRefreshState> _keyPullToRefresh = GlobalKey();
 
-  final GlobalKey<LoadMoreListViewState> _keyLoadMore = new GlobalKey();
+  final GlobalKey<LoadMoreListViewState> _keyLoadMore = GlobalKey();
 
   final _bigFont = const TextStyle(fontSize: 18.0);
 
