@@ -1,8 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pull_to_refresh_view/bloc/pull_to_refresh_bloc.dart';
 import 'package:pull_to_refresh_view/dio_http.dart';
 import 'package:pull_to_refresh_view/model.dart';
+import 'bloc/ModelState.dart';
 import 'data.dart';
 import 'http.dart';
 import 'widget/flutter_pull_to_refresh.dart';
@@ -28,7 +31,10 @@ class MyApp extends StatelessWidget {
           // Notice that the counter didn't reset back to zero; the application
           // is not restarted.
           primarySwatch: Colors.blue),
-      home: _PullToRefreshDemo(),
+      home: BlocProvider<PullToRefreshBloc>(
+          create: (context) => PullToRefreshBloc(),
+          child: _PullToRefreshDemo(),
+      ),
     );
   }
 }
@@ -61,9 +67,19 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
 
   static const List<Color> colors = [Color(0xFFf9f9f9), Color(0xFFEEEEEE)];
 
+
+  final _scrollController = ScrollController();
+  final _scrollThreshold = 200.0;
+
+  bool _refresh = true;
+  PullToRefreshBloc _bloc;
+
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
+    _bloc = BlocProvider.of<PullToRefreshBloc>(context);
     _onRefresh();
   }
 
@@ -85,11 +101,57 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
       ),
       body: PullToRefreshView(
         key: _keyPullToRefresh,
-        child: _buildWidget(),
+        child: _blocBuildListView(),
         onRefresh: _onRefresh,
         onLoadMore: _onLoadMore,
       ),
     );
+  }
+
+  Widget _blocBuildListView() {
+    return BlocBuilder<PullToRefreshBloc, ModelState>(
+      builder: (context, state) {
+        print('BlocBuilder');
+        if (_refresh) {
+          _list.clear();
+        }
+        _list.addAll(state.models);
+        return ListView.builder(
+            itemBuilder: (BuildContext context, int index) {
+              if (index == _list.length) {
+                return Container(height: 64, child: Center(child: Text('Loading...'),),);
+              }
+              final itemData = _list[index];
+              Column column = Column(children: <Widget>[]);
+              Widget itemChild = Container(
+                  height: 64.0,
+                  child: ListTile(title: Text('$index.${itemData.name}', style: _bigFont))
+              );
+              column.children.add(itemChild);
+              //column.children.add(Divider(color: Color(0xFF999999), height: 2.0));
+              return Material(
+                  color: colors[index % colors.length],
+                  child: InkWell(
+                      onTap: () {
+
+                      },
+                      child: column
+                  )
+              );
+            },
+          itemCount: _list.length + 1,
+        );
+      },
+    );
+  }
+
+  void _onScroll() {
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+    if (maxScroll - currentScroll <= _scrollThreshold) {
+      _refresh = false;
+      _bloc.add('more');
+    }
   }
 
   Widget _buildWidget() {
@@ -146,7 +208,9 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
     Timer(const Duration(seconds: 1), () { completer.complete(); });
     return completer.future.then((v) {
       // _loadDataFromHttp(true);
-      _requestData(true);
+      // _requestData(true);
+      _refresh = true;
+      _bloc.add('refresh');
     });
   }
 
@@ -155,38 +219,40 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
     Timer(const Duration(seconds: 1), () { completer.complete(); });
     return completer.future.then((v) {
       // _loadDataFromHttp(false);
-      _requestData(false);
+      // _requestData(false);
+      _refresh = false;
+      _bloc.add('more');
     });
   }
 
-  void _requestData(bool refresh) {
-    DioHttp.request<List<dynamic>>('/wxarticle/chapters/json',
-        method: DioHttp.GET,
-        onSuccess: (data) {
-          print("data <- " + data.toString());
-          List<Model> result = data.map((e) => Model.fromJson(e)).toList();
-          if (result == null) return;
-          bool isEmpty;
-          if (refresh) {
-            _clearList(false);
-          }
-          isEmpty = _list.isEmpty;
-
-          result.forEach((item) {
-            _list.add(item);
-            _keyLoadMore.currentState.insertItem(_list.length - 1);
-            ++i;
-          });
-          if (isEmpty) {
-            _keyLoadMore.currentState.insertItem(_list.length);
-          }
-          if (i > 40) {
-            _keyPullToRefresh.currentState.setCanLoadMore(false);
-          }
-        },
+  void _requestData(bool refresh) async {
+     final data = await DioHttp.request<List<dynamic>>('/wxarticle/chapters/json',
         onError: (error, errorMsg) {
           print('$error, $errorMsg');
         });
+     if (data == null) return;
+
+     print("data <- " + data.toString());
+     List<Model> result = data.map((e) => Model.fromJson(e)).toList();
+     if (result == null) return;
+
+     if (refresh) {
+       _clearList(false);
+     }
+
+     bool isEmpty = _list.isEmpty;
+
+     result.forEach((item) {
+       _list.add(item);
+       _keyLoadMore.currentState.insertItem(_list.length - 1);
+       ++i;
+     });
+     if (isEmpty) {
+       _keyLoadMore.currentState.insertItem(_list.length);
+     }
+     if (i > 40) {
+       _keyPullToRefresh.currentState.setCanLoadMore(false);
+     }
   }
 
   Future<void> _loadDataFromHttp(bool refresh) async {

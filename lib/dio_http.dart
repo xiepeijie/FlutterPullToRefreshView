@@ -33,27 +33,19 @@ class DioHttp {
     return _dio;
   }
 
-  static void request<T>(String apiPath,
-      { String method = POST,
-        parameters,
-        Function(T) onSuccess,
-        Function(int error, String errorMsg) onError,
+  static Future<T> request<T>(String apiPath,
+      { Function(int error, String errorMsg) onError,
         CancelToken cancelToken }) async {
     try {
       Dio dio = await _getDio();
-      Response response;
-      if (method == GET) {
-        response = await dio.get(apiPath, queryParameters: parameters, cancelToken: cancelToken);
-      } else {
-        response = await dio.post(apiPath, cancelToken: cancelToken);
-      }
+      Response response = await dio.post(apiPath, cancelToken: cancelToken);
       final resData = response.data;
       final code = resData['errorCode'];
       final msg = resData['errorMsg'];
       print('response code <- $code');
       if (code == 0 || code == 200) {
         var data = resData['data'];
-        onSuccess(data);
+        return data;
       } else {
         onError(code, msg);
       }
@@ -61,6 +53,7 @@ class DioHttp {
       print('http error \n$e');
       onError(-100, e.toString());
     }
+    return null;
   }
 
 }
