@@ -4,17 +4,15 @@ import 'package:pull_to_refresh_view/model.dart';
 
 import 'model_state.dart';
 
-class PullToRefreshBloc extends Bloc<String, ModelState> {
+class PullToRefreshBloc extends Cubit<ModelState> {
 
   PullToRefreshBloc() : super(ModelState([]));
 
-  @override
-  Stream<ModelState> mapEventToState(String event) async* {
-    ModelState modelState = await _getDataList();
-    yield modelState;
+  void add(ModelState state) {
+    super.emit(state);
   }
 
-  Future<ModelState> _getDataList() async {
+  Future<void> getDataList() async {
     final apiPath = '/wxarticle/chapters/json';
     final data = await DioHttp.request<List<dynamic>>(
         apiPath,
@@ -27,7 +25,7 @@ class PullToRefreshBloc extends Bloc<String, ModelState> {
     }
     print("data <- " + data.toString());
     List<Model> models = data.map((e) => Model.fromJson(e)).toList();
-    return ModelState(models);
+    add(ModelState(models));
   }
 
 }

@@ -31,10 +31,14 @@ class MyApp extends StatelessWidget {
           // Notice that the counter didn't reset back to zero; the application
           // is not restarted.
           primarySwatch: Colors.blue),
-      home: BlocProvider<PullToRefreshBloc>(
-          create: (context) => PullToRefreshBloc(),
-          child: _PullToRefreshDemo(),
-      ),
+      home: _buildBlocProvider(),
+    );
+  }
+
+  Widget _buildBlocProvider() {
+    return BlocProvider<PullToRefreshBloc>(
+      create: (context) => PullToRefreshBloc(),
+      child: _PullToRefreshDemo(),
     );
   }
 }
@@ -150,7 +154,7 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
     final currentScroll = _scrollController.position.pixels;
     if (maxScroll - currentScroll <= _scrollThreshold) {
       _refresh = false;
-      _bloc.add('more');
+      _bloc.getDataList();
     }
   }
 
@@ -190,6 +194,11 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
   }
 
   void _clearList(bool showEmptyView) {
+    if (_keyLoadMore.currentState == null) {
+      _list.clear();
+      _bloc.add(ModelState([]));
+      return;
+    }
     final removeBuilder = (c, a) {};
     for (int j = 0; j < _list.length; ++j) {
       _keyLoadMore.currentState.removeItem(0, removeBuilder);
@@ -210,7 +219,7 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
       // _loadDataFromHttp(true);
       // _requestData(true);
       _refresh = true;
-      _bloc.add('refresh');
+      _bloc.getDataList();
     });
   }
 
@@ -221,7 +230,7 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
       // _loadDataFromHttp(false);
       // _requestData(false);
       _refresh = false;
-      _bloc.add('more');
+      _bloc.getDataList();
     });
   }
 
