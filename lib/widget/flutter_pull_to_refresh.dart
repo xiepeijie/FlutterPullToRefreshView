@@ -326,7 +326,7 @@ const Duration _duration = Duration(milliseconds: 200);
 class LoadMoreListView<T> extends StatefulWidget {
 
   LoadMoreListView(this.list, this.builder,
-      {Key key, this.loadMoreItem, this.emptyImageAsset, String emptyText = '暂无内容'}) :
+      {Key key, this.loadMoreItem, this.emptyImageAsset, String emptyText = '暂无内容', this.onPostBuild}) :
         emptyText = emptyText,
         super(key: key);
 
@@ -335,6 +335,7 @@ class LoadMoreListView<T> extends StatefulWidget {
   final Widget loadMoreItem;
   final String emptyImageAsset;
   final String emptyText;
+  final void Function() onPostBuild;
 
 
   @override
@@ -356,6 +357,9 @@ class LoadMoreListViewState<T> extends State<LoadMoreListView> {
   String _emptyImageAsset;
   String _emptyText;
 
+  bool _isBuild = false;
+
+
   set emptyImageAsset(String emptyImage) {
     _emptyImageAsset = emptyImage;
   }
@@ -364,21 +368,33 @@ class LoadMoreListViewState<T> extends State<LoadMoreListView> {
     _emptyText = emptyText;
   }
 
+  void setPersistentFrameListener(WidgetsBinding binding) {
+    binding.addPersistentFrameCallback((timeStamp) {
+      if (_isBuild) {
+        _isBuild = false;
+        widget.onPostBuild?.call();
+      }
+    });
+  }
+
   @override
   void initState() {
     _emptyImageAsset = widget.emptyImageAsset;
     _emptyText = widget.emptyText;
-    WidgetsBinding.instance.addPostFrameCallback((d) {
+    final binding = WidgetsBinding.instance;
+    binding.addPostFrameCallback((d) {
       setState(() {
         double height = _keyAnimatedList.currentContext.size.height;
         _emptyHeight = height.clamp(200.0, 500.0);
       });
+      setPersistentFrameListener(binding);
     });
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
+    _isBuild = true;
     return AnimatedList(key: _keyAnimatedList,
       itemBuilder: (context, index, animation) {
         if (widget.list.isEmpty) {

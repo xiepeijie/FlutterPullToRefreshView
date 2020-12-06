@@ -6,7 +6,6 @@ import 'package:pull_to_refresh_view/bloc/pull_to_refresh_bloc.dart';
 import 'package:pull_to_refresh_view/dio_http.dart';
 import 'package:pull_to_refresh_view/model.dart';
 import 'bloc/model_state.dart';
-import 'data.dart';
 import 'http.dart';
 import 'widget/flutter_pull_to_refresh.dart';
 
@@ -57,6 +56,8 @@ class _PullToRefreshDemo extends StatefulWidget {
 
 class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
 
+  static const List<Color> colors = [Color(0xFFf9f9f9), Color(0xFFEEEEEE)];
+
   final GlobalKey<PullToRefreshState> _keyPullToRefresh = GlobalKey();
 
   final GlobalKey<LoadMoreListViewState> _keyLoadMore = GlobalKey();
@@ -65,15 +66,7 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
 
   final List<Model> _list = List();
 
-  final Http _http = Http();
-
   int i = 1;
-
-  static const List<Color> colors = [Color(0xFFf9f9f9), Color(0xFFEEEEEE)];
-
-
-  final _scrollController = ScrollController();
-  final _scrollThreshold = 200.0;
 
   bool _refresh = true;
   PullToRefreshBloc _bloc;
@@ -82,7 +75,6 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
     _bloc = BlocProvider.of<PullToRefreshBloc>(context);
     _onRefresh();
   }
@@ -105,92 +97,74 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
       ),
       body: PullToRefreshView(
         key: _keyPullToRefresh,
-        child: _blocBuildListView(),
+        child: _buildWidget(),
         onRefresh: _onRefresh,
         onLoadMore: _onLoadMore,
       ),
     );
   }
 
-  Widget _blocBuildListView() {
-    return BlocBuilder<PullToRefreshBloc, ModelState>(
+  Widget _buildWidget() {
+    Widget widget = BlocBuilder<PullToRefreshBloc, ModelState>(
       builder: (context, state) {
-        print('BlocBuilder');
-        if (_refresh) {
-          _list.clear();
-        }
-        _list.addAll(state.models);
-        return ListView.builder(
-            itemBuilder: (BuildContext context, int index) {
-              if (index == _list.length) {
-                return Container(height: 64, child: Center(child: Text('Loading...'),),);
-              }
-              final itemData = _list[index];
-              Column column = Column(children: <Widget>[]);
-              Widget itemChild = Container(
-                  height: 64.0,
-                  child: ListTile(title: Text('$index.${itemData.name}', style: _bigFont))
-              );
-              column.children.add(itemChild);
-              //column.children.add(Divider(color: Color(0xFF999999), height: 2.0));
-              return Material(
-                  color: colors[index % colors.length],
-                  child: InkWell(
-                      onTap: () {
+        return LoadMoreListView<Model>(
+          _list,
+          (index, itemData) {
+            //print("item = $index");
+            Model itemModel = itemData as Model;
+            Column column = Column(children: <Widget>[]);
+            Widget itemChild = Container(
+                height: 64.0,
+                child: ListTile(title: Text('$index.${itemModel.name}', style: _bigFont))
+            );
+            column.children.add(itemChild);
+            //column.children.add(Divider(color: Color(0xFF999999), height: 2.0));
+            return Material(
+                color: colors[index % colors.length],
+                child: InkWell(
+                    onTap: () {
+                      _list.removeAt(index);
+                      _keyLoadMore.currentState.removeItem(
+                          index,
+                          _removedItemBuilder(itemChild),
+                          duration: Duration(milliseconds: 500)
+                      );
+                    },
+                    child: column
+                )
+            );
+          },
+          key: _keyLoadMore,
+          // 自定义加载更多item的样式
+          //loadMoreItem: Center(child: Text('Loading...')),
+          emptyText: '暂时还没数据，试试下拉刷新',
+          onPostBuild: () {
+            print('onPostBuild');
+            List<Model> result = state.models;
+            if (result == null || result.isEmpty) return;
 
-                      },
-                      child: column
-                  )
-              );
-            },
-          itemCount: _list.length + 1,
+            if (_refresh) {
+              _clearList(false);
+            }
+
+            bool isEmpty = _list.isEmpty;
+
+            result.forEach((item) {
+              _list.add(item);
+              _keyLoadMore.currentState.insertItem(_list.length - 1);
+              ++i;
+            });
+            if (isEmpty) {
+              _keyLoadMore.currentState.insertItem(_list.length);
+            }
+            if (i > 40) {
+              _keyPullToRefresh.currentState.setCanLoadMore(false);
+            }
+          },
         );
       },
     );
-  }
-
-  void _onScroll() {
-    final maxScroll = _scrollController.position.maxScrollExtent;
-    final currentScroll = _scrollController.position.pixels;
-    if (maxScroll - currentScroll <= _scrollThreshold) {
-      _refresh = false;
-      _bloc.getDataList();
-    }
-  }
-
-  Widget _buildWidget() {
-    return LoadMoreListView<Model>(
-        _list,
-        (index, itemData) {
-          //print("item = $index");
-          Model itemModel = itemData as Model;
-          Column column = Column(children: <Widget>[]);
-          Widget itemChild = Container(
-              height: 64.0,
-              child: ListTile(title: Text('$index.${itemModel.name}', style: _bigFont))
-          );
-          column.children.add(itemChild);
-          //column.children.add(Divider(color: Color(0xFF999999), height: 2.0));
-          return Material(
-            color: colors[index % colors.length],
-            child: InkWell(
-              onTap: () {
-                _list.removeAt(index);
-                _keyLoadMore.currentState.removeItem(
-                  index,
-                  _removedItemBuilder(itemChild),
-                  duration: Duration(milliseconds: 500)
-                );
-              },
-              child: column
-            )
-          );
-        },
-        key: _keyLoadMore,
-        // 自定义加载更多item的样式
-        //loadMoreItem: Center(child: Text('Loading...')),
-        emptyText: '暂时还没数据，试试下拉刷新',
-    );
+    return widget;
   }
 
   void _clearList(bool showEmptyView) {
@@ -262,28 +236,6 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
      if (i > 40) {
        _keyPullToRefresh.currentState.setCanLoadMore(false);
      }
-  }
-
-  Future<void> _loadDataFromHttp(bool refresh) async {
-    List<Data> result = await _http.get();
-    if (result == null) return;
-    bool isEmpty;
-    if (refresh) {
-      _clearList(false);
-    }
-    isEmpty = _list.isEmpty;
-
-    result.forEach((item) {
-      _list.add(Model(id: item.id, name: item.name));
-      _keyLoadMore.currentState.insertItem(_list.length - 1);
-      ++i;
-    });
-    if (isEmpty) {
-      _keyLoadMore.currentState.insertItem(_list.length);
-    }
-    if (i > 40) {
-      _keyPullToRefresh.currentState.setCanLoadMore(false);
-    }
   }
 
   AnimatedListRemovedItemBuilder _removedItemBuilder(Widget child) {
