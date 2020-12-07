@@ -340,7 +340,7 @@ class LoadMoreListView<T> extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() {
-    return LoadMoreListViewState();
+    return LoadMoreListViewState(list);
   }
 
 }
@@ -353,12 +353,16 @@ class LoadMoreListViewState<T> extends State<LoadMoreListView> {
 
   final GlobalKey<AnimatedListState> _keyAnimatedList = new GlobalKey();
 
+  final List<T> _list;
+
   double _emptyHeight = 0.0;
   String _emptyImageAsset;
   String _emptyText;
 
   bool _isBuild = false;
 
+
+  LoadMoreListViewState(this._list);
 
   set emptyImageAsset(String emptyImage) {
     _emptyImageAsset = emptyImage;
@@ -420,7 +424,7 @@ class LoadMoreListViewState<T> extends State<LoadMoreListView> {
           child: childView,
         );
       },
-      initialItemCount: widget.list.isEmpty ? 1 : (widget.list.length + 1),
+      initialItemCount: 1,
     );
   }
 
@@ -468,8 +472,55 @@ class LoadMoreListViewState<T> extends State<LoadMoreListView> {
     _keyAnimatedList.currentState.insertItem(index, duration: duration);
   }
 
-  void removeItem(int index, AnimatedListRemovedItemBuilder builder, {Duration duration = _duration}) {
+  void insertItemValue(T value) {
+    _list.add(value);
+    insertItem(_list.length - 1);
+  }
+
+  void insertAllItem(List<T> list) {
+    if (list == null || list.isEmpty) {
+      return;
+    }
+
+    bool isEmpty = _list.isEmpty;
+    list.forEach((value) {
+      insertItemValue(value);
+    });
+    if (isEmpty) {
+      insertItem(_list.length);
+    }
+  }
+
+  AnimatedListRemovedItemBuilder _removedItemBuilder(Widget child) {
+    AnimatedListRemovedItemBuilder removedItemBuilder = (context, animation) {
+      return SlideTransition(
+        position: Tween<Offset>(
+        begin: Offset(1.2, 0.0), end: Offset(0.0, 0.0)).animate(animation),
+        child: child
+      );
+    };
+    return removedItemBuilder;
+  }
+
+  void removeItem(int index, {Widget child, AnimatedListRemovedItemBuilder builder, Duration duration = _duration}) {
+    if (index > -1 && index < _list.length) {
+      _list.removeAt(index);
+    }
+    builder = builder ?? (child != null ? _removedItemBuilder(child) : (context, animation) => SizedBox.shrink());
     _keyAnimatedList.currentState.removeItem(index, builder, duration: duration);
+  }
+
+  void removeAllItem(bool showEmptyView) {
+    print('removeAllItem');
+    int length = _list.length;
+    _list.clear();
+    for (int j = 0; j < length; ++j) {
+      removeItem(0);
+    }
+    removeItem(0);
+    if (showEmptyView) {
+      insertItem(0);
+    }
   }
 }
 

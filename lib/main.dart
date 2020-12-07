@@ -5,8 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pull_to_refresh_view/bloc/pull_to_refresh_bloc.dart';
 import 'package:pull_to_refresh_view/dio_http.dart';
 import 'package:pull_to_refresh_view/model.dart';
+
 import 'bloc/model_state.dart';
-import 'http.dart';
 import 'widget/flutter_pull_to_refresh.dart';
 
 
@@ -68,7 +68,6 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
 
   int i = 1;
 
-  bool _refresh = true;
   PullToRefreshBloc _bloc;
 
 
@@ -123,10 +122,9 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
                 color: colors[index % colors.length],
                 child: InkWell(
                     onTap: () {
-                      _list.removeAt(index);
                       _keyLoadMore.currentState.removeItem(
                           index,
-                          _removedItemBuilder(itemChild),
+                          child: itemChild,
                           duration: Duration(milliseconds: 500)
                       );
                     },
@@ -143,20 +141,13 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
             List<Model> result = state.models;
             if (result == null || result.isEmpty) return;
 
-            if (_refresh) {
+            if (state.isRefresh) {
               _clearList(false);
             }
 
-            bool isEmpty = _list.isEmpty;
+            _keyLoadMore.currentState.insertAllItem(result);
+            i += result.length;
 
-            result.forEach((item) {
-              _list.add(item);
-              _keyLoadMore.currentState.insertItem(_list.length - 1);
-              ++i;
-            });
-            if (isEmpty) {
-              _keyLoadMore.currentState.insertItem(_list.length);
-            }
             if (i > 40) {
               _keyPullToRefresh.currentState.setCanLoadMore(false);
             }
@@ -168,20 +159,7 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
   }
 
   void _clearList(bool showEmptyView) {
-    if (_keyLoadMore.currentState == null) {
-      _list.clear();
-      _bloc.add(ModelState([]));
-      return;
-    }
-    final removeBuilder = (c, a) {};
-    for (int j = 0; j < _list.length; ++j) {
-      _keyLoadMore.currentState.removeItem(0, removeBuilder);
-    }
-    _keyLoadMore.currentState.removeItem(0, removeBuilder);
-    _list.clear();
-    if (showEmptyView) {
-      _keyLoadMore.currentState.insertItem(0);
-    }
+    _keyLoadMore.currentState.removeAllItem(showEmptyView);
   }
 
   Future<void> _onRefresh() {
@@ -190,10 +168,8 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
     final Completer<void> completer = Completer<void>();
     Timer(const Duration(seconds: 1), () { completer.complete(); });
     return completer.future.then((v) {
-      // _loadDataFromHttp(true);
       // _requestData(true);
-      _refresh = true;
-      _bloc.getDataList();
+      _bloc.getDataList(true);
     });
   }
 
@@ -201,10 +177,8 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
     final Completer<void> completer = Completer<void>();
     Timer(const Duration(seconds: 1), () { completer.complete(); });
     return completer.future.then((v) {
-      // _loadDataFromHttp(false);
       // _requestData(false);
-      _refresh = false;
-      _bloc.getDataList();
+      _bloc.getDataList(false);
     });
   }
 
@@ -238,15 +212,4 @@ class _PullToRefreshDemoState extends State<_PullToRefreshDemo> {
      }
   }
 
-  AnimatedListRemovedItemBuilder _removedItemBuilder(Widget child) {
-    AnimatedListRemovedItemBuilder removedItemBuilder = (context, animation) {
-      return SlideTransition(
-          position: Tween<Offset>(
-              begin: Offset(1.2, 0.0), end: Offset(0.0, 0.0)).animate(
-              animation),
-          child: child
-      );
-    };
-    return removedItemBuilder;
-  }
 }

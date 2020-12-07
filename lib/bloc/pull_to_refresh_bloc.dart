@@ -6,13 +6,13 @@ import 'model_state.dart';
 
 class PullToRefreshBloc extends Cubit<ModelState> {
 
-  PullToRefreshBloc() : super(ModelState([]));
+  PullToRefreshBloc() : super(ModelState(true, []));
 
   void add(ModelState state) {
     super.emit(state);
   }
 
-  Future<void> getDataList() async {
+  Future<void> getDataList(bool isRefresh) async {
     final apiPath = '/wxarticle/chapters/json';
     final data = await DioHttp.request<List<dynamic>>(
         apiPath,
@@ -21,11 +21,11 @@ class PullToRefreshBloc extends Cubit<ModelState> {
         }
     );
     if (data == null) {
-      return state;
+      return;
     }
     print("data <- " + data.toString());
     List<Model> models = data.map((e) => Model.fromJson(e)).toList();
-    add(ModelState(models));
+    add(ModelState(isRefresh, models));
   }
 
 }
